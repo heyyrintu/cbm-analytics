@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - MAX_UPLOAD_SIZE=20971520  # 20MB
+    volumes:
+      - ./backend:/app
+      - /tmp/uploads:/tmp/uploads
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm start
+
+  test-backend:
+    build: ./backend
+    environment:
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend:/app
+    command: pytest tests/ -v
+    profiles:
+      - test
+
+  test-frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm test -- --coverage --watchAll=false
+    profiles:
+      - test
